@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Study Hub</title>
+
+<style>
+/* =========================
+   PREMIUM SAAS DESIGN
+========================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+  color: white;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+/* Light Mode */
+body.light {
+  background: #f5f7fa;
+  color: #111;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.nav-item {
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+/* Glass Card */
+.card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(15px);
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+/* Chat UI */
+.chat-box {
+  height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%;
+}
+
+.user {
+  background: #6c5ce7;
+  align-self: flex-end;
+}
+
+.bot {
+  background: #2d3436;
+}
+
+/* Inputs */
+textarea, input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #6c5ce7;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #a29bfe;
+}
+
+.toggle {
+  margin-top: auto;
+}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar {
+    display: none;
+  }
+  body {
+    flex-direction: column;
+  }
+}
+
+.spinner {
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg);}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>AI Study Hub</h2>
+
+  <div class="nav-item" onclick="showSection('chat')">AI Chat</div>
+  <div class="nav-item" onclick="showSection('generator')">Content Generator</div>
+  <div class="nav-item" onclick="showSection('code')">Code Assistant</div>
+  <div class="nav-item" onclick="showSection('text')">Text Tools</div>
+  <div class="nav-item" onclick="showSection('image')">Image Generator</div>
+
+  <button class="toggle" onclick="toggleMode()">Toggle Mode</button>
+</div>
+
+<div class="main">
+
+  <!-- CHAT -->
+  <div id="chat" class="section card">
+    <h3>AI Chat</h3>
+    <div class="chat-box" id="chatBox"></div>
+    <textarea id="chatInput" placeholder="Ask something..."></textarea>
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <!-- GENERATOR -->
+  <div id="generator" class="section card" style="display:none">
+    <h3>Essay / Blog Generator</h3>
+    <textarea id="genInput" placeholder="Enter topic..."></textarea>
+    <button onclick="generateContent()">Generate</button>
+    <div id="genOutput"></div>
+  </div>
+
+  <!-- CODE -->
+  <div id="code" class="section card" style="display:none">
+    <h3>Code Assistant</h3>
+    <textarea id="codeInput" placeholder="Describe the code..."></textarea>
+    <button onclick="generateCode()">Generate Code</button>
+    <pre id="codeOutput"></pre>
+  </div>
+
+  <!-- TEXT TOOLS -->
+  <div id="text" class="section card" style="display:none">
+    <h3>Text Summarizer</h3>
+    <textarea id="textInput" placeholder="Paste text..."></textarea>
+    <button onclick="summarize()">Summarize</button>
+    <div id="textOutput"></div>
+  </div>
+
+  <!-- IMAGE -->
+  <div id="image" class="section card" style="display:none">
+    <h3>Image Generator</h3>
+    <input type="text" id="imagePrompt" placeholder="Describe image...">
+    <button onclick="generateImage()">Generate</button>
+    <div id="imageOutput"></div>
+  </div>
+
+</div>
+
+<script>
+
+/* SECTION SWITCH */
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
+
+/* DARK MODE */
+function toggleMode(){
+  document.body.classList.toggle("light");
+}
+
+/* CHAT */
+async function sendMessage(){
+  const input = document.getElementById("chatInput");
+  const chatBox = document.getElementById("chatBox");
+
+  const userMsg = document.createElement("div");
+  userMsg.className = "message user";
+  userMsg.innerText = input.value;
+  chatBox.appendChild(userMsg);
+
+  const spinner = document.createElement("div");
+  spinner.className = "spinner";
+  chatBox.appendChild(spinner);
+
+  try{
+    const res = await fetch("/api/ai/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: input.value})
+    });
+
+    const data = await res.json();
+    spinner.remove();
+
+    const botMsg = document.createElement("div");
+    botMsg.className = "message bot";
+    botMsg.innerText = data.reply;
+    chatBox.appendChild(botMsg);
+
+  }catch(err){
+    spinner.remove();
+    alert("Error connecting to AI");
+  }
+
+  input.value="";
+}
+
+/* GENERATOR */
+async function generateContent(){
+  alert("Connect to backend route similar to chat API");
+}
+
+/* CODE */
+async function generateCode(){
+  alert("Connect to backend route similar to chat API");
+}
+
+/* TEXT */
+async function summarize(){
+  alert("Connect to backend route similar to chat API");
+}
+
+/* IMAGE */
+async function generateImage(){
+  alert("Connect to backend image route");
+}
+
+</script>
+
+</body>
+</html>
